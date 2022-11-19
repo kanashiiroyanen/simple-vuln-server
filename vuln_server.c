@@ -8,7 +8,7 @@
 #include<netinet/in.h>
 #include<arpa/inet.h>
 
-#define PORT 9999
+#define PORT 8888
 
 int main(void)
 {
@@ -19,7 +19,10 @@ int main(void)
     socklen_t sin_size;
     int recv_length;
     int optval = 1;
-    char buf[100];
+    char buf[200];
+    char *down_str = "finish";
+
+    printf("buf = %p\n", buf);
 
     if ((sockfd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket");
@@ -66,15 +69,32 @@ int main(void)
         printf("connection to server: %s, dst_port: %d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
         send(new_sockfd, "Hello\n", 6, 0);
+        printf("buf = %p\n", buf);
         recv_length = recv(new_sockfd, &buf, 1024, 0);
 
         while (recv_length > 0) {
             printf("received: %d bytes\n", recv_length);
+            printf("buf = %p\n", buf);
             printf("%s\n", buf);
+            send(new_sockfd, "Send OK\n", 8, 0);
             recv_length = recv(new_sockfd, &buf, 1024, 0);
+            if (strncmp(down_str, buf, 6) == 0) {
+              printf("test");
+              send(new_sockfd, "Finish...\n", 10, 0);
+              break;
+            }
+        }
+
+        if (strncmp(down_str, buf, 6) == 0) {
+            recv_length = recv(new_sockfd, &buf, 1024, 0);
+            printf("buf = %p\n", buf);
+            printf("%s\n", buf);
+            close(new_sockfd);
+            break;
         }
 
         close(new_sockfd);
+
     }
 
     close(sockfd);
